@@ -38,7 +38,7 @@ router.get('/', auth, async (req, res) => {
     }
 });
 
-
+// Get single course by ID
 router.get('/:id', auth, async (req, res) => {
     try {
         const course = await Course.findById(req.params.id).populate('createdBy', 'name email');
@@ -46,6 +46,60 @@ router.get('/:id', auth, async (req, res) => {
             return res.status(404).json({ error: 'Course not found' });
         }
         res.json(course);
+    } catch (err) {
+        res.status(500).json({ error: 'Server error', message: err.message });
+    }
+});
+
+// Update course by ID
+router.put('/:id', auth, async (req, res) => {
+    try {
+        const { title, description, level, category, subcategory, coverImage } = req.body;
+        
+        const course = await Course.findById(req.params.id);
+        if (!course) {
+            return res.status(404).json({ error: 'Course not found' });
+        }
+        
+        // Check if user is the creator of the course
+        if (course.createdBy.toString() !== req.user.id) {
+            return res.status(403).json({ error: 'Not authorized to update this course' });
+        }
+        
+        
+        course.title = title || course.title;
+        course.description = description || course.description;
+        course.level = level || course.level;
+        course.category = category || course.category;
+        course.subcategory = subcategory || course.subcategory;
+        course.coverImage = coverImage || course.coverImage;
+        course.updatedAt = Date.now();
+        
+        await course.save();
+        
+        // Populate and return updated course
+        const updatedCourse = await Course.findById(course._id).populate('createdBy', 'name email');
+        res.json(updatedCourse);
+    } catch (err) {
+        res.status(500).json({ error: 'Server error', message: err.message });
+    }
+});
+
+
+router.delete('/:id', auth, async (req, res) => {
+    try {
+        const course = await Course.findById(req.params.id);
+        if (!course) {
+            return res.status(404).json({ error: 'Course not found' });
+        }
+        
+        // Check if user is the creator of the course
+        if (course.createdBy.toString() !== req.user.id) {
+            return res.status(403).json({ error: 'Not authorized to delete this course' });
+        }
+        
+        await Course.findByIdAndDelete(req.params.id);
+        res.json({ message: 'Course deleted successfully' });
     } catch (err) {
         res.status(500).json({ error: 'Server error', message: err.message });
     }
