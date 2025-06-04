@@ -3,7 +3,6 @@ const router = express.Router();
 const auth = require('../middleware/auth');
 const Course = require('../Models/Course');
 
-// Add course
 router.post('/add', auth, async (req, res) => {
     try {
         const { title, description, level, category, subcategory, coverImage } = req.body;
@@ -28,7 +27,6 @@ router.post('/add', auth, async (req, res) => {
     }
 });
 
-// Get all courses
 router.get('/', auth, async (req, res) => {
     try {
         const courses = await Course.find().populate('createdBy', 'name email');
@@ -38,7 +36,6 @@ router.get('/', auth, async (req, res) => {
     }
 });
 
-// Get single course by ID
 router.get('/:id', auth, async (req, res) => {
     try {
         const course = await Course.findById(req.params.id).populate('createdBy', 'name email');
@@ -77,7 +74,6 @@ router.put('/:id', auth, async (req, res) => {
         
         await course.save();
         
-        // Populate and return updated course
         const updatedCourse = await Course.findById(course._id).populate('createdBy', 'name email');
         res.json(updatedCourse);
     } catch (err) {
